@@ -4,11 +4,13 @@
   #include <AsyncTCP.h>
   #include <ESPAsyncWebServer.h>
   #include <AsyncElegantOTA.h>
+  #include <BlynkSimpleEsp32.h>
 #else
   #include <ESP8266WiFi.h>
   #include <ESPAsyncTCP.h>
   #include <ESPAsyncWebServer.h>
   #include <AsyncElegantOTA.h>
+  #include <BlynkSimpleEsp8266.h>
 #endif
 
 AsyncWebServer server(80);
@@ -18,14 +20,6 @@ AsyncWebServer server(80);
 #define BLYNK_AUTH_TOKEN "8NMx9GZbYWrjR_6bnKXg33Es-TmCMN5n"
 
 #define BLYNK_PRINT Serial
-
-#ifdef ESP32
-  #include <WiFi.h>
-  #include <BlynkSimpleEsp32.h>
-#else
-  #include <ESP8266WiFi.h>
-  #include <BlynkSimpleEsp8266.h>
-#endif
 
 char auth[] = "8NMx9GZbYWrjR_6bnKXg33Es-TmCMN5n";
 char ssid[] = "projectb20";
@@ -57,7 +51,6 @@ int ldr_sense;
 Servo servo1;
 Servo servo2;
 
-int a = 0;
 int door = 0;
 
 WidgetLCD lcd1(V0);
@@ -162,7 +155,7 @@ BLYNK_CONNECTED() {
 }
 
 BLYNK_WRITE(V2) {
-  int door = param.asInt();
+  door = param.asInt();
   if (door == 1) {
     j = j + 1;
     if (j >= 4) {
@@ -224,48 +217,57 @@ void loop() {
   if (j == 1) {
     j = 2;
     digitalWrite(red_led, LOW);
+    lcd.clear();
+    for (int i = 5; i >= 0; i--) {
+      digitalWrite(yellow_led, HIGH);
+      digitalWrite(buzzer, HIGH);
+      lcd.clear();
+      lcd.print("OPEN IN : ");
+      lcd.print(i);
+      delay(500);
+      digitalWrite(buzzer, LOW);
+      digitalWrite(yellow_led, LOW);
+      delay(500);
+    }
+    lcd.clear();
+    lcd.print(" HAPPY JOURNEY ");
+    for (int s = 120; s >= 0; s = s - 10) {
+      Serial.println(s);
+      servo1.write(s);
+      delay(20);
+      servo2.write(s);
+      delay(20);
+      delay(500);
+    }
+    digitalWrite(yellow_led, HIGH);
+    digitalWrite(green_led, HIGH);
+  } else if (j == 3) {
+    j = 0;
+    digitalWrite(red_led, HIGH);
+    lcd.clear();
+    for (int i = 5; i > 0; i--) {
+      digitalWrite(buzzer, HIGH);
+      lcd.clear();
+      lcd.print("CLOSE IN : ");
+      lcd.print(i);
+      delay(500);
+      digitalWrite(buzzer, LOW);
+      delay(500);
+    }
+    for (int s = 0; s <= 120; s = s + 10) {
+      Serial.println(s);
+      servo1.write(s);
+      delay(20);
+      servo2.write(s);
+      delay(20);
+      delay(500);
+    }
   }
+  digitalWrite(2, HIGH);
+  indicator.on();
+  delay(300);
+  digitalWrite(2, LOW);
+  indicator.off();
+  delay(300);
+  Blynk.run();
 }
-  lcd.clear();
-  for(int i=5; i>=0; i--)
-  {
-    digitalWrite(yellow_led,HIGH);
-    digitalWrite(buzzer,HIGH);
-    lcd.clear();
-    lcd.print("OPEN IN : ");lcd.print(i);
-    delay(500);
-    digitalWrite(buzzer,LOW);
-    digitalWrite(yellow_led,LOW);
-    delay(500);
-    lcd.clear();
-    lcd.print(" HAPPY  JOURNEY ");
-  }
-  for(int s=120;s>=0;s=s-10)
-  {
-    Serial.println(s);
-    servo1.write(s);delay(20);
-    servo2.write(s);delay(20);
-    delay(500);
-  }   
-  
-  digitalWrite(yellow_led,HIGH);
-  digitalWrite(green_led,HIGH);
-} else if(j==3) { j=0; digitalWrite(red_led,HIGH);
-  lcd.clear();
-  for(int i=5; i>0; i--)
-  {
-    digitalWrite(buzzer,HIGH);
-    lcd.clear();
-    lcd.print("CLOSE IN : ");lcd.print(i);
-    delay(500);
-    digitalWrite(buzzer,LOW);
-    delay(500);
-  }
-  for(int s=0;s<=120;s=s+10)
-  {
-    Serial.println(s);
-    servo1.write(s);delay(20);
-    servo2.write(s);delay(20);
-    delay(500);
-  }
-} else { pass; } digitalWrite(2,HIGH);indicator.on();delay(300);digitalWrite(2,LOW);indicator.off();delay(300); Blynk.run(); }
